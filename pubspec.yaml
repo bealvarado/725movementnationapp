@@ -1,0 +1,55 @@
+name: dance_studio
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  table_calendar: ^3.1.2
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+     - assets/images/google_logo.png
+     - assets/images/facebook_logo.png
+     - assets/images/apple_logo.png
+     - assets/images/bannerimage.png
+     - assets/images/course1.png
+     - assets/images/course2.png
+     - assets/images/course3.png
+     - assets/images/event1.png
+     - assets/images/event2.png
+     - assets/images/event3.png
+     - assets/images/brandlogo.png
+     - assets/images/BCempty_state.png
+     - assets/images/rishika_greencircle.png
+     - assets/images/winter_greencircle.png
+     - assets/images/tommy_greencircle.png
+     - assets/images/kurt_redcircle.png
+     - assets/images/apple_pay.png
+     - assets/images/credit_card.png
+     - assets/images/afterpay.png
+     - assets/images/credit_balance.png
+     - assets/images/Cempty_state.png
+
+
+     
+
