@@ -11,25 +11,63 @@ class ClassSchedule extends StatefulWidget {
 }
 
 class _ClassScheduleState extends State<ClassSchedule> {
-  DateTime _focusedDay = DateTime.utc(2024, 10, 18); // Default to Wednesday
-  DateTime? _selectedDay = DateTime.utc(2024, 10, 18); // Default to Wednesday
+  DateTime _focusedDay = DateTime.now(); // Default to today's date
+  DateTime? _selectedDay = DateTime.now(); // Default to today's date
 
-  Future<Map<DateTime, List<Event>>> fetchEvents() async {
-    // Simulate fetching data from a database or API
-    await Future.delayed(const Duration(seconds: 1)); // Reduced loading time to 1 second
-    return {
-      DateTime.utc(2024, 10, 18): [Event('Event 1')], // Wednesday
-    };
+  Future<List<ClassData>> fetchClassData(DateTime date) async {
+    // Simulate fetching data from a backend API
+    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+
+    // Example data structure, replace with actual API call
+    return [
+      ClassData(
+        imageUrl: 'assets/images/rishika_greencircle.png',
+        title: 'Class with Rishika',
+        subtitle: 'Beginner Choreography',
+        subtitleColor: const Color(0xFF54B872), // Green color for Beginner Choreography
+        spotsLeft: 31,
+        time: '6pm',
+        isBooked: false,
+      ),
+      ClassData(
+        imageUrl: 'assets/images/tommy_greencircle.png',
+        title: 'Class with Tommy',
+        subtitle: 'Beginner Choreography',
+        subtitleColor: const Color(0xFF54B872), // Green color for Beginner Choreography
+        spotsLeft: 21,
+        time: '6pm',
+        isBooked: true,
+      ),
+      ClassData(
+        imageUrl: 'assets/images/winter_greencircle.png',
+        title: 'Class with Winter',
+        subtitle: 'Beginner Choreography',
+        subtitleColor: const Color(0xFF54B872), // Green color for Beginner Choreography
+        spotsLeft: 3,
+        time: '6pm',
+        isBooked: false,
+      ),
+      ClassData(
+        imageUrl: 'assets/images/kurt_redcircle.png',
+        title: 'Class with Kurt',
+        subtitle: 'Int / Advanced Choreography',
+        subtitleColor: const Color(0xFF936B06), // Brown color for Int / Advanced Choreography
+        spotsLeft: 31,
+        time: '8:15pm',
+        isBooked: false,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8), // Set background color to #F8F8F8
       appBar: AppBar(
         title: const Text('Parramatta Class Schedule'),
       ),
-      body: FutureBuilder<Map<DateTime, List<Event>>>(
-        future: fetchEvents(),
+      body: FutureBuilder<List<ClassData>>(
+        future: fetchClassData(_selectedDay!),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -38,14 +76,14 @@ class _ClassScheduleState extends State<ClassSchedule> {
               ),
             );
           } else if (snapshot.hasError) {
-            return const Center(child: Text('Error loading events'));
+            return const Center(child: Text('Error loading class data'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No events found'));
+            return const Center(child: Text('No classes available'));
           } else {
             return Column(
               children: [
-                _buildCalendar(snapshot.data!, context),
-                Expanded(child: _buildClassList()),
+                _buildCalendar(context),
+                Expanded(child: _buildClassList(snapshot.data!)),
               ],
             );
           }
@@ -54,7 +92,7 @@ class _ClassScheduleState extends State<ClassSchedule> {
     );
   }
 
-  Widget _buildCalendar(Map<DateTime, List<Event>> events, BuildContext context) {
+  Widget _buildCalendar(BuildContext context) {
     return TableCalendar(
       locale: Localizations.localeOf(context).languageCode,
       firstDay: DateTime.utc(2020, 10, 16),
@@ -91,50 +129,25 @@ class _ClassScheduleState extends State<ClassSchedule> {
         // Disable weekends
         return date.weekday != DateTime.saturday && date.weekday != DateTime.sunday;
       },
-      eventLoader: (day) {
-        return events[day] ?? [];
-      },
     );
   }
 
-  Widget _buildClassList() {
-    return ListView(
+  Widget _buildClassList(List<ClassData> classData) {
+    return ListView.builder(
       padding: const EdgeInsets.all(8.0),
-      children: const [
-        ClassCard(
-          imageUrl: 'assets/images/rishika_greencircle.png',
-          title: 'Class with Rishika',
-          subtitle: 'Beginner Choreography',
-          subtitleColor: Color(0xFF54B872), // Green color for subtitle
-          spotsLeft: 31,
-          time: '6pm',
-        ),
-        ClassCard(
-          imageUrl: 'assets/images/tommy_greencircle.png',
-          title: 'Class with Tommy',
-          subtitle: 'Beginner Choreography',
-          subtitleColor: Color(0xFF54B872), // Green color for subtitle
-          spotsLeft: 21,
-          time: '6pm',
-        ),
-        ClassCard(
-          imageUrl: 'assets/images/winter_greencircle.png',
-          title: 'Class with Winter',
-          subtitle: 'Beginner Choreography',
-          subtitleColor: Color(0xFF54B872), // Green color for subtitle
-          spotsLeft: 3,
-          time: '6pm',
-          isBooked: true,
-        ),
-        ClassCard(
-          imageUrl: 'assets/images/kurt_redcircle.png',
-          title: 'Class with Kurt',
-          subtitle: 'Int / Advanced Choreography',
-          subtitleColor: Color(0xFF936B06), // Brown color for subtitle
-          spotsLeft: 31,
-          time: '8:15pm',
-        ),
-      ],
+      itemCount: classData.length,
+      itemBuilder: (context, index) {
+        final data = classData[index];
+        return ClassCard(
+          imageUrl: data.imageUrl,
+          title: data.title,
+          subtitle: data.subtitle,
+          subtitleColor: data.subtitleColor,
+          spotsLeft: data.spotsLeft,
+          time: data.time,
+          isBooked: data.isBooked,
+        );
+      },
     );
   }
 }
@@ -248,43 +261,58 @@ class ClassCard extends StatelessWidget {
                 ),
               ],
             ),
-if (!isBooked)
-  Padding(
-    padding: const EdgeInsets.only(top: 8.0),
-    child: Align(
-            alignment: Alignment.centerRight,
-    child: SizedBox(
-      width: 340.0, // Align button width
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/BookingDetails'); // Navigate to BookingDetails
-        },
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white, backgroundColor: const Color(0xFFE84479), // White font color
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4), // 4px round border
-          ),
-          minimumSize: const Size.fromHeight(44), // Button height 38px
-          textStyle: const TextStyle(
-            fontSize: 16, // Button text font size
-            fontWeight: FontWeight.w500, // Medium weight
-            fontFamily: 'SF Pro Display', // Font family
-          ),
-        ),
-        child: const Text('Book Class'),
-      ),
-    ),
-  ),
-  ),
-          ]
+            if (!isBooked)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Align(
+                  alignment: Alignment.centerRight, // Align button to the right
+                  child: SizedBox(
+                    width: 336, // Set a specific width for the button
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/BookingDetails'); // Navigate to BookingDetails
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: const Color(0xFFE84479), // White font color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4), // 4px round border
+                        ),
+                        minimumSize: const Size.fromHeight(38), // Button height 38px
+                        textStyle: const TextStyle(
+                          fontSize: 16, // Button text font size
+                          fontWeight: FontWeight.w500, // Medium weight
+                          fontFamily: 'SF Pro Display', // Font family
+                        ),
+                      ),
+                      child: const Text('Book Class'),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class Event {
+class ClassData {
+  final String imageUrl;
   final String title;
+  final String subtitle;
+  final Color subtitleColor;
+  final int spotsLeft;
+  final String time;
+  final bool isBooked;
 
-  Event(this.title);
+  ClassData({
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+    required this.subtitleColor,
+    required this.spotsLeft,
+    required this.time,
+    this.isBooked = false,
+  });
 }
+

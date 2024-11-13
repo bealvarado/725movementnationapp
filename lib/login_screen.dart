@@ -1,3 +1,5 @@
+import 'package:dance_studio/createaccount_screen.dart';
+import 'package:dance_studio/forgotpassword_screen.dart';
 import 'package:dance_studio/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -37,6 +39,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _handleSignIn() {
+    // Retrieve the text from the controllers
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    // Placeholder for API call
+    // You can use the email and password variables to make an API call here
+    print('Email: $email');
+    print('Password: $password');
+
+    // Navigate to HomeScreen for now
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,10 +70,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Welcome back!',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 38,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                   fontFamily: 'SF Pro Display',
+                  letterSpacing: -2,
                 ),
               ),
               const SizedBox(height: 8),
@@ -82,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ..onTap = () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SamplePage()),
+                            MaterialPageRoute(builder: (context) => const CreateAccount()),
                           );
                         },
                     ),
@@ -146,14 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                onPressed: _isButtonEnabled
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HomeScreen()),
-                        );
-                      }
-                    : null,
+                onPressed: _isButtonEnabled ? _handleSignIn : null,
                 child: const Text('Sign In'),
               ),
               const SizedBox(height: 16),
@@ -173,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ..onTap = () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SamplePage()),
+                          MaterialPageRoute(builder: (context) => const ForgotPassword()),
                         );
                       },
                   ),
@@ -274,22 +287,6 @@ class SocialSignInButton extends StatelessWidget {
             return const BorderSide(color: Color(0xFFD0D5DD), width: 1); // Default gray outline
           },
         ),
-      ),
-    );
-  }
-}
-
-class SamplePage extends StatelessWidget {
-  const SamplePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sample Page'),
-      ),
-      body: const Center(
-        child: Text('This is a sample page.'),
       ),
     );
   }

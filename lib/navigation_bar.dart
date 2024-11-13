@@ -19,6 +19,7 @@ class _NavBar extends State<NavBar> {
     const HomeScreen(),
     const GalleryScreen(),
     const BookingScreen(),
+    const BookingScreen(),
     const ProfileScreen(),
   ];
 
@@ -48,6 +49,10 @@ class _NavBar extends State<NavBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_outlined),
             label: 'Book',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble),
+            label: 'Message',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

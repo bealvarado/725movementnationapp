@@ -49,6 +49,9 @@ flutter:
      - assets/images/afterpay.png
      - assets/images/credit_balance.png
      - assets/images/Cempty_state.png
+     - assets/images/splashlogo.png
+     - assets/images/BlueLogo.png
+     - assets/images/RedLogo.png
 
 
      
