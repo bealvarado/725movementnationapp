@@ -14,19 +14,22 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.19.0
-
   cupertino_icons: ^1.0.8
+  flutter_launcher_icons: ^0.14.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
 
+flutter_icons:
+  image_path: "assets/images/AppIcon.png"  # Path to your icon image
+  android: true
+  ios: true
+
 flutter:
   uses-material-design: true
 
-
-  # To add assets to your application, add an assets section, like this:
   assets:
      - assets/images/google_logo.png
      - assets/images/facebook_logo.png
@@ -52,7 +55,6 @@ flutter:
      - assets/images/splashlogo.png
      - assets/images/BlueLogo.png
      - assets/images/RedLogo.png
-
-
-     
-
+     - assets/images/Avatar.png
+     - assets/images/dance-3.png
+     - assets/images/AppIcon.png

@@ -1,4 +1,3 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -36,7 +35,7 @@ class _ClassScheduleState extends State<ClassSchedule> {
         subtitleColor: const Color(0xFF54B872), // Green color for Beginner Choreography
         spotsLeft: 21,
         time: '6pm',
-        isBooked: true,
+        isBooked: false,
       ),
       ClassData(
         imageUrl: 'assets/images/winter_greencircle.png',
@@ -112,17 +111,17 @@ class _ClassScheduleState extends State<ClassSchedule> {
         formatButtonVisible: false,
         titleCentered: true,
       ),
-      calendarStyle: const CalendarStyle(
+      calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
-          color: Color(0xFF4146F5), // Blue color for today
+          border: Border.all(color: Colors.blue, width: 2), // 2px outlined circle for today
           shape: BoxShape.circle,
         ),
-        selectedDecoration: BoxDecoration(
+        selectedDecoration: const BoxDecoration(
           color: Color(0xFF4146F5), // Blue color for selected day
           shape: BoxShape.circle,
         ),
-        selectedTextStyle: TextStyle(color: Colors.white), // White color for selected date text
-        weekendTextStyle: TextStyle(color: Colors.grey), // Grey color for weekends
+        selectedTextStyle: const TextStyle(color: Colors.white), // White color for selected date text
+        weekendTextStyle: const TextStyle(color: Colors.grey), // Grey color for weekends
         markersMaxCount: 0, // Remove the small dot on the calendar date
       ),
       enabledDayPredicate: (date) {
@@ -146,6 +145,9 @@ class _ClassScheduleState extends State<ClassSchedule> {
           spotsLeft: data.spotsLeft,
           time: data.time,
           isBooked: data.isBooked,
+          price: 22.0, // Fixed price for all classes
+          date: _selectedDay.toString(),
+          location: 'Parramatta Studio',
         );
       },
     );
@@ -160,6 +162,9 @@ class ClassCard extends StatelessWidget {
   final int spotsLeft;
   final String time;
   final bool isBooked;
+  final double price;
+  final String date;
+  final String location;
 
   const ClassCard({
     super.key,
@@ -170,6 +175,9 @@ class ClassCard extends StatelessWidget {
     required this.spotsLeft,
     required this.time,
     this.isBooked = false,
+    required this.price,
+    required this.date,
+    required this.location,
   });
 
   @override
@@ -267,13 +275,29 @@ class ClassCard extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerRight, // Align button to the right
                   child: SizedBox(
-                    width: 336, // Set a specific width for the button
+                    width: 330, 
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/BookingDetails'); // Navigate to BookingDetails
+                       onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/BookingDetails',
+                          arguments: ClassCard(
+                            title: title,
+                            price: price,
+                            date: '2024-11-19',
+                            time: time,
+                            location: 'Studio A',
+                            imageUrl: imageUrl,
+                            subtitle: subtitle,
+                            subtitleColor: subtitleColor,
+                            spotsLeft: spotsLeft,
+                            isBooked: isBooked,
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white, backgroundColor: const Color(0xFFE84479), // White font color
+                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFFE84479), // Button color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4), // 4px round border
                         ),
@@ -294,6 +318,9 @@ class ClassCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void setState(Null Function() param0) {
 }
 
 class ClassData {

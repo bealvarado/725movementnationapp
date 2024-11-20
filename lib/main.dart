@@ -1,5 +1,3 @@
-// main.dart
-
 import 'package:dance_studio/createaccount_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,7 +11,7 @@ import 'gallery_screen.dart';
 import 'profile_screen.dart';
 import 'classschedule_screen.dart';
 import 'bookingdetails_screen.dart';
-import 'splash_screen.dart'; 
+import 'splash_screen.dart';
 
 void main() {
   initializeDateFormatting().then((_) => runApp(const DanceApp()));
@@ -37,7 +35,7 @@ class DanceApp extends StatelessWidget {
         Locale('en', 'US'), // English
         // Add other supported locales here
       ],
-      initialRoute: '/splash', 
+      initialRoute: '/splash',
       routes: {
         '/': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
@@ -46,9 +44,17 @@ class DanceApp extends StatelessWidget {
         '/gallery': (context) => const GalleryScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/classSchedule': (context) => const ClassSchedule(),
-        '/BookingDetails': (context) => const BookingDetails(),
-        '/splash': (context) => const SplashScreen(), 
+        '/splash': (context) => const SplashScreen(),
         '/createaccount': (context) => const CreateAccount(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/BookingDetails') {
+          final args = settings.arguments as ClassCard;
+          return MaterialPageRoute(
+            builder: (context) => BookingDetails(classCard: args),
+          );
+        }
+        return null;
       },
     );
   }
