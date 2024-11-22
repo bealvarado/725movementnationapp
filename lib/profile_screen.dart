@@ -1,5 +1,7 @@
+import 'package:dance_studio/accountsettings.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'splash_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -39,6 +41,9 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 16), // Space between name and containers
             // New UI Containers
             _buildCustomContainers(context),
+            const SizedBox(height: 16), // Space between containers and list
+            // Settings List
+            _buildSettingsList(context),
           ],
         ),
       ),
@@ -244,10 +249,99 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-void main() {
-  runApp(const MaterialApp(
-    home: ProfileScreen(), // Set the home screen to ProfileScreen
-  ));
+  Widget _buildSettingsList(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Column(
+        children: [
+          _buildSettingsItem('assets/images/settings.png', "Account Settings", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AccountSettings()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/history.png', "Booking History", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/payment.png', "Payment", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/about.png', "About", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/privacy.png', "Privacy, Terms and Conditions", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/help.png', "Help & FAQs", context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }),
+          const SizedBox(height: 20),
+          _buildSettingsItem('assets/images/logout.png', "Log out", context, () async {
+            // Perform logout operations here
+            // await FirebaseAuth.instance.signOut(); // Uncomment if using Firebase
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SplashScreen()), // Navigate to SplashScreen
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsItem(String imagePath, String title, BuildContext context, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                imagePath, // Image on the left
+                width: 24, // Set the width of the image
+                height: 24, // Set the height of the image
+              ),
+              const SizedBox(width: 16), // Space between image and text
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'SF-Pro-Display',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const Icon(
+            Icons.arrow_forward_ios,
+            color: Color(0xFF9CA3AF),
+            size: 16,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -18,7 +18,7 @@ class _BookingDetailsState extends State<BookingDetails> {
   @override
   void initState() {
     super.initState();
-    _selectedOption = null; // Explicitly set initial value
+    _selectedOption = 1; // Explicitly set initial value
   }
 
   void _handleRadioValueChange(int? value) {
