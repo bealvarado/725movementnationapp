@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeScreenContent(),
     GalleryScreen(),
     BookingScreen(),
-    BookingScreen(),
+    // BookingScreen(),
     ProfileScreen(),
   ];
 
@@ -69,10 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.calendar_month_outlined),
               label: 'Book',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: 'Messages',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.chat_bubble_outline),
+            //   label: 'Messages',
+            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
               label: 'Profile',
