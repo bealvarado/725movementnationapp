@@ -43,12 +43,16 @@ class DanceApp extends StatelessWidget {
         '/classbooking': (context) => const BookingScreen(),
         '/gallery': (context) => const GalleryScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/classSchedule': (context) => const ClassSchedule(),
         '/splash': (context) => const SplashScreen(),
         '/createaccount': (context) => const CreateAccount(),
       },
       onGenerateRoute: (settings) {
-        if (settings.name == '/BookingDetails') {
+        if (settings.name == '/classSchedule') {
+          final location = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => ClassSchedule(location: location),
+          );
+        } else if (settings.name == '/BookingDetails') {
           final args = settings.arguments as ClassCard;
           return MaterialPageRoute(
             builder: (context) => BookingDetails(classCard: args),

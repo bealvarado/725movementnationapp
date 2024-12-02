@@ -102,7 +102,9 @@ class ConfirmationScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ClassSchedule()),
+                    MaterialPageRoute(
+                      builder: (context) => const ClassSchedule(location: 'Parramatta Studio'), // Pass the location here
+                    ),
                   );
                 },
                 style: OutlinedButton.styleFrom(
