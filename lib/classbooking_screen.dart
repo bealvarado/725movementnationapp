@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:dance_studio/classschedule_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For jsonEncode
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _BookingScreenState createState() => _BookingScreenState();
 }
 
 class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final bool _isBookingComplete = false;
+  bool _isBookingComplete = false;
   String? _selectedLocation;
 
   @override
@@ -102,27 +103,27 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                 width: MediaQuery.of(context).size.width * 0.9,
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.pressed)) {
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.pressed)) {
                           return const Color(0xFF4146F5);
                         }
                         return const Color(0xFF4146F5);
                       },
                     ),
-                    minimumSize: WidgetStateProperty.all<Size>(
+                    minimumSize: MaterialStateProperty.all<Size>(
                       const Size(double.infinity, 50),
                     ),
-                    foregroundColor: WidgetStateProperty.all<Color>(
+                    foregroundColor: MaterialStateProperty.all<Color>(
                       Colors.white,
                     ),
-                    textStyle: WidgetStateProperty.all<TextStyle>(
+                    textStyle: MaterialStateProperty.all<TextStyle>(
                       const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontFamily: 'SF Pro Display',
                       ),
                     ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -139,6 +140,30 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
         ),
       ),
     );
+  }
+
+  Future<void> addBooking(String name, String location, String time) async {
+    final url = Uri.parse('http://<your-server-ip>:5000/add-booking');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'name': name, 'location': location, 'time': time}),
+      );
+
+      if (response.statusCode == 200) {
+        // Handle success
+        print('Booking added successfully!');
+        setState(() {
+          _isBookingComplete = true;
+        });
+      } else {
+        // Handle error
+        print('Failed to add booking: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   Widget _buildBookingSummary(BuildContext context) {
@@ -227,9 +252,9 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.pressed)) {
+                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.pressed)) {
                             return const Color(0xFF4146F5);
                           }
                           return _selectedLocation != null
@@ -237,19 +262,20 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                               : const Color(0xFF93A4C1);
                         },
                       ),
-                      minimumSize: WidgetStateProperty.all<Size>(
+                      minimumSize: MaterialStateProperty.all<Size>(
                         const Size(double.infinity, 50),
                       ),
-                      foregroundColor: WidgetStateProperty.all<Color>(
+                      foregroundColor: MaterialStateProperty.all<Color>(
                         Colors.white,
                       ),
-                      textStyle: WidgetStateProperty.all<TextStyle>(
+                      textStyle: MaterialStateProperty.all<TextStyle>(
                         const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontFamily: 'SF Pro Display',
+                          fontSize: 16,
                         ),
                       ),
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
@@ -279,23 +305,23 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     width: double.infinity,
                     child: OutlinedButton(
                       style: ButtonStyle(
-                        side: WidgetStateProperty.all<BorderSide>(
+                        side: MaterialStateProperty.all<BorderSide>(
                           const BorderSide(color: Color(0xFF9CA3AF)),
                         ),
-                        minimumSize: WidgetStateProperty.all<Size>(
+                        minimumSize: MaterialStateProperty.all<Size>(
                           const Size(double.infinity, 50),
                         ),
-                        foregroundColor: WidgetStateProperty.all<Color>(
+                        foregroundColor: MaterialStateProperty.all<Color>(
                           Colors.black,
                         ),
-                        textStyle: WidgetStateProperty.all<TextStyle>(
+                        textStyle: MaterialStateProperty.all<TextStyle>(
                           const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontFamily: 'SF Pro Display',
                             fontSize: 16,
                           ),
                         ),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
