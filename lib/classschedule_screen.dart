@@ -342,4 +342,3 @@ class ClassData {
     this.isBooked = false,
   });
 }
-
