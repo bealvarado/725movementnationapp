@@ -281,11 +281,14 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                         ),
                       ),
                     ),
+                    // Inside the onPressed callback of the 'Book' button in selectLocation method
                     onPressed: _selectedLocation != null
                         ? () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const ClassSchedule()),
+                              MaterialPageRoute(
+                                builder: (context) => ClassSchedule(location: _selectedLocation!),
+                              ),
                             );
                           }
                         : null,
