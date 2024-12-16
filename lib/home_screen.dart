@@ -39,12 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 2,
         title: Image.asset('assets/images/brandlogo.png', height: 40),
       ),
+      backgroundColor: const Color(0xFFF8F8F8),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(255, 255, 255, 255),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.2),
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -87,7 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.chat_bubble_outline),
+            //   label: 'Messages',
+            // ),
+            
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 
@@ -146,11 +152,11 @@ class HomeScreenContent extends StatelessWidget {
                       left: 16,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const BookingScreen()),
-                            (Route<dynamic> route) => false,
-                          );
+                          // Update the selected index to the "Book" tab
+                          final homeScreenState = context.findAncestorStateOfType<_HomeScreenState>();
+                          homeScreenState?.setState(() {
+                            homeScreenState._selectedIndex = 2; // Index of the "Book" tab
+                          });
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE84479),
@@ -190,7 +196,8 @@ class HomeScreenContent extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(builder: (context) => const BookingScreen(initialTabIndex: 1),
+                      ),
                     );
                   },
                   child: const Text(
@@ -243,7 +250,8 @@ class HomeScreenContent extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(builder: (context) => const BookingScreen(initialTabIndex: 2),
+                    )
                     );
                   },
                   child: const Text(

@@ -39,7 +39,7 @@ class GalleryScreen extends StatelessWidget {
         title: const Text(
           'Class Videos',
           style: TextStyle(
-            fontSize: 20, // Change the font size here
+            fontSize: 18, // Change the font size here
             color: Colors.black, // Change the text color here
             fontFamily: 'SF Pro Display', // Change the font family here
             fontWeight: FontWeight.bold, // Add font weight

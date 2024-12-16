@@ -1,7 +1,11 @@
 import 'package:dance_studio/accountsettings.dart';
+import 'package:dance_studio/bookinghistory.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'splash_screen.dart';
+import 'bookinghistory.dart';
+import 'about.dart';
+import 'privacytermscondition.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -265,7 +269,7 @@ class ProfileScreen extends StatelessWidget {
           _buildSettingsItem('assets/images/history.png', "Booking History", context, () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (context) => BookingHistory()),
             );
           }),
           const SizedBox(height: 20),
@@ -279,23 +283,23 @@ class ProfileScreen extends StatelessWidget {
           _buildSettingsItem('assets/images/about.png', "About", context, () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (context) => About()),
             );
           }),
           const SizedBox(height: 20),
           _buildSettingsItem('assets/images/privacy.png', "Privacy, Terms and Conditions", context, () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              MaterialPageRoute(builder: (context) => PrivacyTermsAndConditions()),
             );
           }),
-          const SizedBox(height: 20),
-          _buildSettingsItem('assets/images/help.png', "Help & FAQs", context, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          }),
+          // const SizedBox(height: 20),
+          // _buildSettingsItem('assets/images/help.png', "Help & FAQs", context, () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(builder: (context) => const HomeScreen()),
+          //   );
+          // }),
           const SizedBox(height: 20),
           _buildSettingsItem('assets/images/logout.png', "Log out", context, () async {
             // Perform logout operations here
