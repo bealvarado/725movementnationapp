@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode
 
 class BookingScreen extends StatefulWidget {
-  const BookingScreen({super.key});
+  final int initialTabIndex;
+
+  const BookingScreen({super.key, this.initialTabIndex = 0});
 
   @override
   _BookingScreenState createState() => _BookingScreenState();
@@ -18,7 +20,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
   }
 
   @override
@@ -30,6 +32,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(48.0),
         child: AppBar(
@@ -178,29 +181,226 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildCoursesContent(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Course page here',
-        style: TextStyle(
-          fontSize: 24,
-          fontFamily: 'SF Pro Display',
-        ),
-      ),
-    );
-  }
+Widget _buildCoursesContent(BuildContext context) {
+  final courses = [
+    {'course': 'Kids Class', 'image': 'assets/images/kidscourse.png'},
+    {'course': 'Beginner Course', 'image': 'assets/images/beginnercourse.png'},
+    {'course': 'Intermediate and Advanced Courses', 'image': 'assets/images/intcourse.png'},
+    {'course': 'Pop up / International Workshops', 'image': 'assets/images/popupcourse.png'},
+  ];
 
-  Widget _buildHireStudioContent(BuildContext context) {
+  return ListView.builder(
+    padding: const EdgeInsets.all(16.0),
+    itemCount: courses.length,
+    itemBuilder: (context, index) {
+      try {
+        return Container(
+          height: 85,
+          margin: const EdgeInsets.only(bottom: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4.0),
+                child: Image.asset(
+                  courses[index]['image']!,
+                  width: 140,
+                  height: 95,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    courses[index]['course']!,
+                    style: const TextStyle(
+                      fontFamily: 'SF Pro Display',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+        );
+      } catch (e) {
+        print('Error building course item: $e');
+        return const SizedBox.shrink(); // Return an empty widget on error
+      }
+    },
+  );
+}
+
+Widget _buildHireStudioContent(BuildContext context) {
+  try {
+    final studios = [
+      {
+        'name': 'Big Studio',
+        'image': 'assets/images/bigstudio.png',
+        'price': '\$90 per hour',
+        'capacity': 'Fits approx 30-35ppl',
+      },
+      {
+        'name': 'Small Studio',
+        'image': 'assets/images/smallstudio.png',
+        'price': '\$50 per hour',
+        'capacity': 'Fits approx 12-15ppl',
+      },
+    ];
+
+    // Debugging: Check if studios list is populated
+    print('Studios list length: ${studios.length}');
+
+    if (studios.isEmpty) {
+      return const Center(
+        child: Text(
+          'No studios available',
+          style: TextStyle(
+            fontSize: 18,
+            fontFamily: 'SF Pro Display',
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: studios.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.asset(
+                  studios[index]['image']!,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          studios[index]['name']!,
+                          style: const TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18, // Change font size if needed
+                          ),
+                        ),
+                        Text(
+                          studios[index]['price']!,
+                          style: const TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18, // Change font size if needed
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      studios[index]['capacity']!,
+                      style: const TextStyle(
+                        fontFamily: 'SF Pro Display',
+                        fontSize: 14, // Change font size if needed
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color(0xFF4146F5),
+                          ),
+                          foregroundColor: MaterialStateProperty.all<Color>(
+                            Colors.white,
+                          ),
+                          textStyle: MaterialStateProperty.all<TextStyle>(
+                            const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'SF Pro Display',
+                            ),
+                          ),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Handle hire studio action
+                        },
+                        child: const Text('Hire Studio'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  } catch (e) {
+    print('Error building studio content: $e');
     return const Center(
       child: Text(
-        'Hire studio page here',
+        'Error loading studios',
         style: TextStyle(
-          fontSize: 24,
+          fontSize: 18,
           fontFamily: 'SF Pro Display',
+          color: Colors.red,
         ),
       ),
     );
   }
+}
+
+
 
   void selectLocation(BuildContext context) {
     showDialog(
@@ -394,4 +594,3 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     );
   }
 }
-

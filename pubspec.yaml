@@ -23,10 +23,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: "^0.14.1"
 
 flutter_launcher_icons:
-  image_path: "assets/images/AppIcon.png"  # Path to your icon image
+  image_path: "assets/images/AppIcon2.png"  # Path to your icon image
   android: true
   ios: true
   remove_alpha_ios: true  # Removes alpha channel for iOS icons
@@ -62,6 +61,7 @@ flutter:
      - assets/images/Avatar.png
      - assets/images/dance-3.png
      - assets/images/AppIcon.png
+     - assets/images/AppIcon2.png
      - assets/images/settings.png
      - assets/images/history.png
      - assets/images/payment.png
@@ -83,3 +83,9 @@ flutter:
      - assets/images/winter.png
      - assets/images/kidsdc1.png
      - assets/images/kidsdc2.png
+     - assets/images/beginnercourse.png
+     - assets/images/intcourse.png
+     - assets/images/kidscourse.png
+     - assets/images/popupcourse.png
+     - assets/images/smallstudio.png
+     - assets/images/bigstudio.png
