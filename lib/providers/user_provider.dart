@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart'; // For NetworkAssetBundle
+
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter/services.dart'; // For NetworkAssetBundle
+
 
 class UserProvider with ChangeNotifier {
   String _uid = "";

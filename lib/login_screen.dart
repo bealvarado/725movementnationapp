@@ -1,18 +1,32 @@
 import 'package:dance_studio/createaccount_screen.dart';
 import 'package:dance_studio/forgotpassword_screen.dart';
 import 'package:dance_studio/home_screen.dart';
+import 'package:dance_studio/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart'; // Facebook
+import 'package:sign_in_with_apple/sign_in_with_apple.dart'; // Apple
+
 import 'dart:convert';
 
-void main() => runApp(const MaterialApp(home: LoginScreen()));
+void main() => runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+        ],
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -20,10 +34,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isButtonEnabled = false;
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
   void initState() {
     super.initState();
+    _resetUserData(); // Reset user data when login screen loads
     _emailController.addListener(_validateInputs);
     _passwordController.addListener(_validateInputs);
   }
@@ -46,29 +64,223 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final String apiUrl = "http://localhost:3000/auth/login"; // Replace with your API URL
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": _emailController.text,
-        "password": _passwordController.text,
-      }),
-    );
+    final String apiUrl = "http://localhost:3000/auth/login";
 
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": _emailController.text,
+          "password": _passwordController.text,
+        }),
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+
+        if (responseBody.containsKey('uid') && responseBody.containsKey('user')) {
+          final uid = responseBody['uid'];
+          final user = responseBody['user'];
+
+          final fullName = user['fullName'];
+          final creditBalance = user['creditBalance'];
+          final phoneNumber = user['phoneNumber'] ?? '';
+          final email = user['email'] ?? '';
+          final profileImage = user['profileImage'] ?? 'assets/images/Avatar.png';
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('uid', uid);
+          await prefs.setString('fullName', fullName);
+          await prefs.setInt('creditBalance', creditBalance);
+
+          if (profileImage.startsWith('blob:') || profileImage.contains(',')) {
+            await prefs.setString('profileImage', profileImage);
+          } else if (profileImage.startsWith('http')) {
+            await prefs.setString('profileImage', profileImage);
+          } else {
+            await prefs.setString('profileImage', 'assets/images/Avatar.png');
+          }
+
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          userProvider.setUser(
+            uid: uid,
+            fullName: fullName,
+            creditBalance: creditBalance,
+          );
+          userProvider.setUserDetails(
+            fullName: fullName,
+            phoneNumber: phoneNumber,
+            email: email,
+            profileImage: profileImage,
+          );
+
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          _showErrorDialog("Invalid response from server. Missing required keys.");
+        }
+      } else {
+        final errorMessage = jsonDecode(response.body)['error'];
+        _showErrorDialog(errorMessage ?? "Invalid credentials.");
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog("Something went wrong. Please try again.");
+    }
+  }
+
+  Future<void> _resetUserData() async {
+  try {
+    // Clear SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    debugPrint("SharedPreferences cleared on login screen load.");
+
+    // Clear UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    userProvider.clearUser();
+    debugPrint("UserProvider cleared on login screen load.");
+  } catch (error) {
+    debugPrint("Error resetting user data: $error");
+  }
+}
+
+
+  Future<void> _handleGoogleSignIn() async {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
 
-    if (response.statusCode == 200) {
-      // Navigate to HomeScreen on successful login
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final userEmail = googleUser.email;
+      final userName = googleUser.displayName ?? "Google User";
+      final userProfileImage = googleUser.photoUrl ?? 'assets/images/Avatar.png';
+
+      const defaultPhoneNumber = "";
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('uid', googleUser.id);
+      await prefs.setString('fullName', userName);
+      await prefs.setString('email', userEmail);
+      await prefs.setString('profileImage', userProfileImage);
+      await prefs.setString('phoneNumber', defaultPhoneNumber);
+
+      Provider.of<UserProvider>(context, listen: false).setUserDetails(
+        fullName: userName,
+        email: userEmail,
+        profileImage: userProfileImage,
+        phoneNumber: defaultPhoneNumber,
       );
-    } else {
-      final errorMessage = jsonDecode(response.body)['error'];
-      _showErrorDialog(errorMessage ?? "Invalid credentials.");
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (error) {
+      print("Google Sign-In Error: $error");
+      _showErrorDialog("Google Sign-In failed. Please try again.");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleFacebookSignIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status == LoginStatus.success) {
+        final userData = await FacebookAuth.instance.getUserData();
+        final userName = userData['name'] ?? 'Facebook User';
+        final userEmail = userData['email'] ?? '';
+        final userProfileImage = userData['picture']['data']['url'] ?? 'assets/images/Avatar.png';
+
+        const defaultPhoneNumber = "";
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('uid', userData['id']);
+        await prefs.setString('fullName', userName);
+        await prefs.setString('email', userEmail);
+        await prefs.setString('profileImage', userProfileImage);
+        await prefs.setString('phoneNumber', defaultPhoneNumber);
+
+        Provider.of<UserProvider>(context, listen: false).setUserDetails(
+          fullName: userName,
+          email: userEmail,
+          profileImage: userProfileImage,
+          phoneNumber: defaultPhoneNumber,
+        );
+
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _showErrorDialog("Facebook Sign-In failed. Please try again.");
+      }
+    } catch (error) {
+      print("Facebook Sign-In Error: $error");
+      _showErrorDialog("Facebook Sign-In failed. Please try again.");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final userName = credential.givenName ?? 'Apple User';
+      final userEmail = credential.email ?? '';
+      const defaultPhoneNumber = "";
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('uid', credential.userIdentifier ?? "");
+      await prefs.setString('fullName', userName);
+      await prefs.setString('email', userEmail);
+      await prefs.setString('phoneNumber', defaultPhoneNumber);
+      await prefs.setString('profileImage', 'assets/images/Avatar.png');
+
+      Provider.of<UserProvider>(context, listen: false).setUserDetails(
+        fullName: userName,
+        email: userEmail,
+        profileImage: 'assets/images/Avatar.png',
+        phoneNumber: defaultPhoneNumber,
+      );
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (error) {
+      print("Apple Sign-In Error: $error");
+      _showErrorDialog("Apple Sign-In failed. Please try again.");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -158,15 +370,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF4146F5)),
                       ),
-                      suffixIcon: Icon(Icons.visibility),
+                      suffixIcon: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                        child: Icon(
+                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -240,35 +462,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   SocialSignInButton(
                     assetName: 'assets/images/google_logo.png',
-                    text: 'Sign up with Google',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
-                      );
-                    },
+                    text: 'Sign in with Google',
+                    onPressed: _handleGoogleSignIn,
                   ),
                   const SizedBox(height: 8),
                   SocialSignInButton(
                     assetName: 'assets/images/facebook_logo.png',
                     text: 'Sign up with Facebook',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
-                      );
-                    },
+                    onPressed: _handleFacebookSignIn,
                   ),
                   const SizedBox(height: 8),
                   SocialSignInButton(
                     assetName: 'assets/images/apple_logo.png',
                     text: 'Sign up with Apple',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
-                      );
-                    },
+                    onPressed: _handleAppleSignIn,
                   ),
                 ],
               ),
@@ -313,21 +520,21 @@ class SocialSignInButton extends StatelessWidget {
         foregroundColor: Colors.black,
         backgroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 50),
-        side: const BorderSide(color: Color(0xFFD0D5DD), width: 1), // Gray outline
+        side: const BorderSide(color: Color(0xFFD0D5DD), width: 1),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4.0), // 4px rounded border
+          borderRadius: BorderRadius.circular(4.0),
         ),
         textStyle: const TextStyle(
-          fontWeight: FontWeight.w600, // Semi-bold
+          fontWeight: FontWeight.w600,
           fontFamily: 'SF Pro Display',
         ),
       ).copyWith(
         side: MaterialStateProperty.resolveWith<BorderSide>(
           (Set<MaterialState> states) {
             if (states.contains(MaterialState.pressed)) {
-              return const BorderSide(color: Color(0xFF4146F5), width: 1); // Blue outline when pressed
+              return const BorderSide(color: Color(0xFF4146F5), width: 1);
             }
-            return const BorderSide(color: Color(0xFFD0D5DD), width: 1); // Default gray outline
+            return const BorderSide(color: Color(0xFFD0D5DD), width: 1);
           },
         ),
       ),
