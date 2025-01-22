@@ -1,46 +1,92 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: ForgotPassword(),
-    );
-  }
-}
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPassword extends StatefulWidget {
-  const ForgotPassword({super.key});
+  const ForgotPassword({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ForgetPasswordScreenState createState() => _ForgetPasswordScreenState();
+  _ForgotPasswordState createState() => _ForgotPasswordState();
 }
 
-class _ForgetPasswordScreenState extends State<ForgotPassword> {
+class _ForgotPasswordState extends State<ForgotPassword> {
   final TextEditingController _emailController = TextEditingController();
-  bool _isButtonEnabled = false;
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _emailController.addListener(() {
-      setState(() {
-        _isButtonEnabled = _emailController.text.isNotEmpty;
-      });
-    });
+Future<void> _resetPassword() async {
+  final email = _emailController.text.trim();
+
+  if (email.isEmpty) {
+    _showErrorDialog("Please enter your email address.");
+    return;
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
+  setState(() {
+    _isLoading = true;
+  });
+
+try {
+  await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+  _showSuccessDialog("Password reset email sent successfully.");
+} on FirebaseAuthException catch (e) {
+  if (e.code == 'user-not-found') {
+    _showErrorDialog("No user found with this email address.");
+  } else if (e.code == 'invalid-email') {
+    _showErrorDialog("The email address is not valid.");
+  } else {
+    _showErrorDialog("An error occurred: ${e.message}");
+  }
+} catch (e) {
+  _showErrorDialog("Failed to reset password. Please try again. Error: $e");
+} finally {
+  setState(() {
+    _isLoading = false;
+  });
+}
+
+}
+
+  void _showErrorDialog(String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (Navigator.canPop(ctx)) Navigator.pop(ctx);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Success'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (Navigator.canPop(ctx)) Navigator.pop(ctx);
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateTo(String routeName) {
+    Navigator.pushNamedAndRemoveUntil(context, routeName, (route) => false);
   }
 
   @override
@@ -57,7 +103,7 @@ class _ForgetPasswordScreenState extends State<ForgotPassword> {
                 const Padding(
                   padding: EdgeInsets.only(top: 100.0),
                   child: Text(
-                    'Forget password',
+                    'Forgot password',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -67,18 +113,26 @@ class _ForgetPasswordScreenState extends State<ForgotPassword> {
                 ),
                 const SizedBox(height: 8),
                 RichText(
-                  text: const TextSpan(
+                  text: TextSpan(
                     text: 'Reset password or ',
-                    style: TextStyle(color: Colors.black),
+                    style: const TextStyle(color: Colors.black),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'login',
-                        style: TextStyle(color: Color(0xFFE84479)),
+                        style: const TextStyle(color: Color(0xFFE84479)),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            _navigateTo('/login');
+                          },
                       ),
-                      TextSpan(text: ' and '),
+                      const TextSpan(text: ' and '),
                       TextSpan(
                         text: 'create an account',
-                        style: TextStyle(color: Color(0xFFE84479)),
+                        style: const TextStyle(color: Color(0xFFE84479)),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            _navigateTo('/createaccount');
+                          },
                       ),
                     ],
                   ),
@@ -98,8 +152,8 @@ class _ForgetPasswordScreenState extends State<ForgotPassword> {
                     hintText: 'Enter your email address',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4.0),
-                      borderSide: BorderSide(
-                        color: _isButtonEnabled ? const Color(0xFF4146F5) : const Color(0xFF9CA3AF),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF9CA3AF),
                         width: 1.0,
                       ),
                     ),
@@ -107,14 +161,20 @@ class _ForgetPasswordScreenState extends State<ForgotPassword> {
                 ),
               ],
             ),
-            ElevatedButton(
-              onPressed: _isButtonEnabled ? () {} : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isButtonEnabled ? const Color(0xFF4146F5) : const Color(0xFF9CA3AF),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Reset Password'),
-            ),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _resetPassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4146F5),
+                      minimumSize: const Size(double.infinity, 50),
+                      textStyle: const TextStyle(color: Colors.white),
+                    ),
+                    child: const Text(
+                      'Reset Password',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
           ],
         ),
       ),

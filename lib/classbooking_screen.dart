@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:dance_studio/classschedule_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For JSON encoding
+import 'package:provider/provider.dart';
+import 'package:dance_studio/providers/user_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingScreen extends StatefulWidget {
-  const BookingScreen({super.key});
+  final int initialTabIndex;
+
+  const BookingScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _BookingScreenState createState() => _BookingScreenState();
 }
 
 class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final bool _isBookingComplete = false;
+  bool _isLoading = true; // Loading state for fetching bookings
+  List<dynamic> _bookings = []; // List of bookings fetched from backend
   String? _selectedLocation;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
+    _fetchBookings(); // Fetch bookings on initialization
   }
 
   @override
@@ -26,9 +37,60 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     super.dispose();
   }
 
+  Future<void> _fetchBookings() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Fetch UID from UserProvider
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final uid = userProvider.uid;
+
+      if (uid == null || uid.isEmpty) {
+        throw Exception("User UID is missing.");
+      }
+
+      print("Fetching bookings for UID: $uid");
+
+      // Backend URL
+      const apiUrl = 'http://localhost:3000/booking'; // Replace with your backend URL
+      final response = await http.get(Uri.parse('$apiUrl?uid=$uid'));
+
+      if (response.statusCode == 200) {
+        final bookings = jsonDecode(response.body);
+        print("Bookings fetched: $bookings");
+        setState(() {
+          _bookings = bookings;
+          _isLoading = false;
+        });
+      } else if (response.statusCode == 404) {
+        print("No bookings found for UID: $uid");
+        setState(() {
+          _bookings = [];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception("Failed to fetch bookings. Status code: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("Error fetching bookings: $error");
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error fetching bookings: $error"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(48.0),
         child: AppBar(
@@ -53,7 +115,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
       body: TabBarView(
         controller: _tabController,
         children: [
-          _isBookingComplete ? _buildBookingSummary(context) : _buildWeekdayClassContent(context),
+          _buildWeekdayClassContent(context),
           _buildCoursesContent(context),
           _buildHireStudioContent(context),
         ],
@@ -61,12 +123,20 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildWeekdayClassContent(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 120.0),
-      child: Center(
+Widget _buildWeekdayClassContent(BuildContext context) {
+  if (_isLoading) {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  if (_bookings.isEmpty) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const SizedBox(
               width: 200,
@@ -95,43 +165,23 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                 fontFamily: 'SF Pro Display',
               ),
             ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 40.0),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.9,
-                child: ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.pressed)) {
-                          return const Color(0xFF4146F5);
-                        }
-                        return const Color(0xFF4146F5);
-                      },
-                    ),
-                    minimumSize: WidgetStateProperty.all<Size>(
-                      const Size(double.infinity, 50),
-                    ),
-                    foregroundColor: WidgetStateProperty.all<Color>(
-                      Colors.white,
-                    ),
-                    textStyle: WidgetStateProperty.all<TextStyle>(
-                      const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
+            const SizedBox(height: 100), // Adjusted spacing to move the button down
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4146F5),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  onPressed: () {
-                    selectLocation(context);
-                  },
-                  child: const Text('Book a Class'),
+                ),
+                onPressed: () {
+                  selectLocation(context);
+                },
+                child: const Text(
+                  'Book a Class',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ),
@@ -141,40 +191,110 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildBookingSummary(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Booking Summary',
-        style: TextStyle(
-          fontSize: 24,
-          fontFamily: 'SF Pro Display',
+  return Column(
+    children: [
+      Expanded(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: _bookings.length,
+          itemBuilder: (context, index) {
+            final booking = _bookings[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    booking['className'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${booking['date']} at ${booking['time']}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Location: ${booking['location']}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Status: ${booking['status']}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: booking['status'] == 'confirmed'
+                          ? Colors.green
+                          : Colors.orange,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
-    );
-  }
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4146F5),
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            onPressed: () {
+              selectLocation(context);
+            },
+            child: const Text(
+              'Book a Class',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
 
-  Widget _buildCoursesContent(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Course page here',
-        style: TextStyle(
-          fontSize: 24,
-          fontFamily: 'SF Pro Display',
-        ),
-      ),
-    );
-  }
 
-  Widget _buildHireStudioContent(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Hire studio page here',
-        style: TextStyle(
-          fontSize: 24,
-          fontFamily: 'SF Pro Display',
-        ),
-      ),
-    );
+
+  
+  Future<void> storeSelectedLocation(String location) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selectedLocation', location);
+    } catch (e) {
+      throw Exception("Failed to store location.");
+    }
   }
 
   void selectLocation(BuildContext context) {
@@ -196,7 +316,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Choose where do you want to attend classes.',
+                    'Choose where you want to attend classes.',
                     style: TextStyle(
                       fontFamily: 'SF Pro Display',
                       fontSize: 16,
@@ -223,96 +343,73 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                 ],
               ),
               actions: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.pressed)) {
-                            return const Color(0xFF4146F5);
-                          }
-                          return _selectedLocation != null
-                              ? const Color(0xFF4146F5)
-                              : const Color(0xFF93A4C1);
-                        },
-                      ),
-                      minimumSize: WidgetStateProperty.all<Size>(
-                        const Size(double.infinity, 50),
-                      ),
-                      foregroundColor: WidgetStateProperty.all<Color>(
-                        Colors.white,
-                      ),
-                      textStyle: WidgetStateProperty.all<TextStyle>(
-                        const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'SF Pro Display',
-                        ),
-                      ),
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                    ),
-                    onPressed: _selectedLocation != null
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ClassSchedule()),
-                            );
-                          }
-                        : null,
-                    child: const Text(
-                      'Book',
-                      style: TextStyle(
-                        fontFamily: 'SF Pro Display',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: ButtonStyle(
-                        side: WidgetStateProperty.all<BorderSide>(
-                          const BorderSide(color: Color(0xFF9CA3AF)),
-                        ),
-                        minimumSize: WidgetStateProperty.all<Size>(
-                          const Size(double.infinity, 50),
-                        ),
-                        foregroundColor: WidgetStateProperty.all<Color>(
-                          Colors.black,
-                        ),
-                        textStyle: WidgetStateProperty.all<TextStyle>(
-                          const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'SF Pro Display',
-                            fontSize: 16,
-                          ),
-                        ),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Column(
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedLocation != null
+                              ? const Color(0xFF4146F5)
+                              : const Color(0xFF93A4C1),
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: 'SF Pro Display',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                        onPressed: _selectedLocation != null
+                            ? () async {
+                                try {
+                                  await storeSelectedLocation(_selectedLocation!);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ClassSchedule(location: _selectedLocation!),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text("Failed to store location."),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
+                        child: const Text(
+                          'Book',
+                          style: TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF9CA3AF)),
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -323,7 +420,14 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildLocationOption(BuildContext context, String location, String imagePath, String label, Color selectedColor, StateSetter setState) {
+  Widget _buildLocationOption(
+    BuildContext context,
+    String location,
+    String imagePath,
+    String label,
+    Color selectedColor,
+    StateSetter setState,
+  ) {
     return InkWell(
       onTap: () {
         setState(() {
@@ -364,5 +468,201 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
       ),
     );
   }
-}
 
+  Widget _buildBookingSummary(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Booking Summary',
+        style: TextStyle(
+          fontSize: 24,
+          fontFamily: 'SF Pro Display',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoursesContent(BuildContext context) {
+    final courses = [
+      {'course': 'Kids Class', 'image': 'assets/images/kidscourse.png'},
+      {'course': 'Beginner Course', 'image': 'assets/images/beginnercourse.png'},
+      {'course': 'Intermediate and Advanced Courses', 'image': 'assets/images/intcourse.png'},
+      {'course': 'Pop up / International Workshops', 'image': 'assets/images/popupcourse.png'},
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: courses.length,
+      itemBuilder: (context, index) {
+        return Container(
+          height: 85,
+          margin: const EdgeInsets.only(bottom: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4.0),
+                child: Image.asset(
+                  courses[index]['image']!,
+                  width: 140,
+                  height: 95,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    courses[index]['course']!,
+                    style: const TextStyle(
+                      fontFamily: 'SF Pro Display',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHireStudioContent(BuildContext context) {
+    final studios = [
+      {
+        'name': 'Big Studio',
+        'image': 'assets/images/bigstudio.png',
+        'price': '\$90 per hour',
+        'capacity': 'Fits approx 30-35ppl',
+      },
+      {
+        'name': 'Small Studio',
+        'image': 'assets/images/smallstudio.png',
+        'price': '\$50 per hour',
+        'capacity': 'Fits approx 12-15ppl',
+      },
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: studios.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.asset(
+                  studios[index]['image']!,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          studios[index]['name']!,
+                          style: const TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          studios[index]['price']!,
+                          style: const TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      studios[index]['capacity']!,
+                      style: const TextStyle(
+                        fontFamily: 'SF Pro Display',
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color(0xFF4146F5),
+                          ),
+                          foregroundColor: MaterialStateProperty.all<Color>(
+                            Colors.white,
+                          ),
+                          textStyle: MaterialStateProperty.all<TextStyle>(
+                            const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'SF Pro Display',
+                            ),
+                          ),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Placeholder action for button click
+                          print('Hire Studio button clicked for ${studios[index]['name']}');
+                        },
+                        child: const Text('Hire Studio'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

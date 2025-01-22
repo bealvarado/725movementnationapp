@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'classbooking_screen.dart'; // Import the BookingScreen
 import 'classschedule_screen.dart'; // Import the ClassSchedule
+import 'home_screen.dart';
 
 class ConfirmationScreen extends StatelessWidget {
-  const ConfirmationScreen({super.key});
+  final ClassCard classCard; // Add this line to receive classCard data
+
+  const ConfirmationScreen({super.key, required this.classCard}); // Update constructor
 
   @override
   Widget build(BuildContext context) {
@@ -50,19 +53,19 @@ class ConfirmationScreen extends StatelessWidget {
             // Additional Information Text
             RichText(
               textAlign: TextAlign.center,
-              text: const TextSpan(
-                style: TextStyle(
+              text: TextSpan(
+                style: const TextStyle(
                   fontFamily: 'SFProDisplay',
                   fontSize: 16,
                   color: Colors.black,
                 ),
                 children: [
-                  TextSpan(text: 'Your booking for '),
+                  const TextSpan(text: 'Your booking for '),
                   TextSpan(
-                    text: 'Beginner Class with Winter',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    text: classCard.title, // Use the classCard title here
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextSpan(text: ' is all set. If you have any questions, feel free to reach out.'),
+                  const TextSpan(text: ' is all set. If you have any questions, feel free to reach out.'),
                 ],
               ),
             ),
@@ -74,7 +77,7 @@ class ConfirmationScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const BookingScreen()),
+                    MaterialPageRoute(builder: (context) => HomeScreen()), // Pass classCard here
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -85,7 +88,7 @@ class ConfirmationScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Back to Booking',
+                  'Back to Home',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -102,7 +105,9 @@ class ConfirmationScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ClassSchedule()),
+                    MaterialPageRoute(
+                      builder: (context) => const ClassSchedule(location: 'Parramatta Studio'), // Pass the location here
+                    ),
                   );
                 },
                 style: OutlinedButton.styleFrom(

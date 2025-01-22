@@ -1,7 +1,11 @@
+import 'package:dance_studio/privacytermscondition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:dance_studio/home_screen.dart';
-import 'package:dance_studio/login_screen.dart'; // Ensure this import is correct
+import 'package:dance_studio/login_screen.dart';
+import 'package:http/http.dart' as http;
+
+import 'dart:convert';
 
 void main() => runApp(const MyApp());
 
@@ -14,7 +18,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: const Color(0xFF4146F5),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontFamily: 'SF Pro Display', fontWeight: FontWeight.bold, fontSize: 24),
+          titleLarge:
+              TextStyle(fontFamily: 'SF Pro Display', fontWeight: FontWeight.bold, fontSize: 24),
           bodyMedium: TextStyle(color: Colors.black),
         ),
       ),
@@ -27,7 +32,6 @@ class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _CreateAccountScreenState createState() => _CreateAccountScreenState();
 }
 
@@ -36,15 +40,12 @@ class _CreateAccountScreenState extends State<CreateAccount> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
-  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController(text: '+61');
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _reenterPasswordController = TextEditingController();
 
-  // Placeholder for backend data
-  final Set<String> _takenUsernames = {'user1', 'user2'}; // Example taken usernames
   final Set<String> _takenEmails = {'example@example.com'}; // Example taken emails
   final Set<String> _takenPhoneNumbers = {'+61123456789'}; // Example taken phone numbers
 
@@ -52,6 +53,79 @@ class _CreateAccountScreenState extends State<CreateAccount> {
     setState(() {
       _isButtonEnabled = _formKey.currentState?.validate() ?? false;
     });
+  }
+
+  Future<void> _handleSignUp() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final String apiUrl = "http://localhost:3000/auth/signup";
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": _emailController.text,
+          "password": _passwordController.text,
+          "fullName": _fullNameController.text,
+          "phoneNumber": _phoneNumberController.text,
+        }),
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response.statusCode == 201) {
+        _showSuccessDialog("Account created successfully!");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      } else {
+        final errorMessage = jsonDecode(response.body)['error'];
+        _showErrorDialog(errorMessage ?? "Something went wrong.");
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog("Something went wrong. Please try again.");
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Success"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showLoginConfirmationDialog() {
@@ -64,13 +138,13 @@ class _CreateAccountScreenState extends State<CreateAccount> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -82,34 +156,6 @@ class _CreateAccountScreenState extends State<CreateAccount> {
         );
       },
     );
-  }
-
-  void _handleSignUp() {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Collect input field values
-    // final String username = _usernameController.text;
-    // final String fullName = _fullNameController.text;
-    // final String phoneNumber = _phoneNumberController.text;
-    // final String email = _emailController.text;
-    // final String password = _passwordController.text;
-
-    // Placeholder for API call
-    // Here you can make an API call with the collected data
-    // Example: await ApiService.signUp(username, fullName, phoneNumber, email, password);
-
-    // Simulate a network request or processing delay
-    Future.delayed(const Duration(seconds: 3), () {
-      setState(() {
-        _isLoading = false;
-      });
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    });
   }
 
   @override
@@ -127,13 +173,16 @@ class _CreateAccountScreenState extends State<CreateAccount> {
             padding: const EdgeInsets.all(16.0),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction, // Validate on user interaction
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               onChanged: _checkFormValidity,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40), // Padding before "Create an account"
-                  const Text('Create an account', style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Create an account',
+                    style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 6),
                   RichText(
                     text: TextSpan(
@@ -149,24 +198,26 @@ class _CreateAccountScreenState extends State<CreateAccount> {
                           text: 'login',
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600, // Semi-bold
-                            color: Color(0xFFE84479), // Pink
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFE84479),
                             decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFE84479), // Pink underline
+                            decorationColor: Color(0xFFE84479),
                             fontFamily: 'SF Pro Display',
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = _showLoginConfirmationDialog,
+                          recognizer: TapGestureRecognizer()..onTap = _showLoginConfirmationDialog,
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 22),
-                  _buildTextField('Username', controller: _usernameController, validator: _validateUsername),
-                  const SizedBox(height: 22),
                   _buildTextField('Full name', controller: _fullNameController, validator: null),
                   const SizedBox(height: 22),
-                  _buildTextField('Phone Number', controller: _phoneNumberController, validator: _validatePhoneNumber, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Phone Number',
+                    controller: _phoneNumberController,
+                    validator: _validatePhoneNumber,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 22),
                   _buildTextField('Email', controller: _emailController, validator: _validateEmail),
                   const SizedBox(height: 22),
@@ -188,17 +239,18 @@ class _CreateAccountScreenState extends State<CreateAccount> {
                           text: 'terms of service ',
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600, // Semi-bold
-                            color: Color(0xFFE84479), // Pink
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFE84479),
                             decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFE84479), // Pink underline
+                            decorationColor: Color(0xFFE84479),
                             fontFamily: 'SF Pro Display',
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                MaterialPageRoute(
+                                    builder: (context) => PrivacyTermsAndConditions()),
                               );
                             },
                         ),
@@ -215,67 +267,76 @@ class _CreateAccountScreenState extends State<CreateAccount> {
                           text: 'privacy policy',
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600, // Semi-bold
-                            color: Color(0xFFE84479), // Pink
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFE84479),
                             decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFE84479), // Pink underline
+                            decorationColor: Color(0xFFE84479),
                             fontFamily: 'SF Pro Display',
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                MaterialPageRoute(
+                                    builder: (context) => PrivacyTermsAndConditions()),
                               );
                             },
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.pressed)) {
-                            return const Color(0xFF4146F5); // Background color when pressed
-                          }
-                          return _isButtonEnabled
-                              ? const Color(0xFF4146F5) // Default background color when enabled
-                              : const Color(0xFF93A4C1); // Background color when disabled
-                        },
-                      ),
-                      minimumSize: WidgetStateProperty.all<Size>(
-                        const Size(double.infinity, 50),
-                      ),
-                      foregroundColor: WidgetStateProperty.all<Color>(
-                        Colors.white, // Text color
-                      ),
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4.0), // 4px rounded border
-                        ),
-                      ),
-                      textStyle: WidgetStateProperty.all<TextStyle>(
-                        const TextStyle(
-                          fontWeight: FontWeight.w600, // Semi-bold
-                          fontFamily: 'SF Pro Display',
-                        ),
+                ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 100.0),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width - 32,
+                child: ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.pressed)) {
+                          return const Color(0xFF4146F5);
+                        }
+                        return _isButtonEnabled
+                            ? const Color(0xFF4146F5)
+                            : const Color(0xFF93A4C1);
+                      },
+                    ),
+                    minimumSize: MaterialStateProperty.all<Size>(
+                      const Size(double.infinity, 50),
+                    ),
+                    foregroundColor: MaterialStateProperty.all<Color>(
+                      Colors.white,
+                    ),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
-                    onPressed: _isButtonEnabled ? _handleSignUp : null,
-                    child: const Text('Sign Up'), // Updated text to "Sign Up"
+                    textStyle: MaterialStateProperty.all<TextStyle>(
+                      const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'SF Pro Display',
+                      ),
+                    ),
                   ),
-                ],
+                  onPressed: _isButtonEnabled ? _handleSignUp : null,
+                  child: const Text('Sign Up'),
+                ),
               ),
             ),
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.3), // Black overlay with 30% opacity
+              color: Colors.black.withOpacity(0.3),
               child: const Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFFE84479), // Pink color for loading indicator
+                  color: Color(0xFFE84479),
                 ),
               ),
             ),
@@ -284,7 +345,10 @@ class _CreateAccountScreenState extends State<CreateAccount> {
     );
   }
 
-  Widget _buildTextField(String label, {required TextEditingController controller, String? Function(String?)? validator, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(String label,
+      {required TextEditingController controller,
+      String? Function(String?)? validator,
+      TextInputType keyboardType = TextInputType.text}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -312,6 +376,7 @@ class _CreateAccountScreenState extends State<CreateAccount> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
+      maxLines: 1, // Ensure maxLines is 1
       decoration: InputDecoration(
         labelText: 'Password',
         border: OutlineInputBorder(
@@ -322,21 +387,36 @@ class _CreateAccountScreenState extends State<CreateAccount> {
           borderRadius: BorderRadius.circular(4.0),
           borderSide: const BorderSide(color: Color(0xFF4146F5), width: 4.0),
         ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
-          ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.help_outline, color: Colors.grey),
+              onPressed: () {
+                _showPasswordRequirements();
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+          ],
         ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'This field is required';
+        }
+        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_=+,.<>?:;#^])[A-Za-z\d@$!%*?&-_=+,.<>?:;#^]{8,}$')
+            .hasMatch(value)) {
+          return 'Invalid password';
         }
         return null;
       },
@@ -344,40 +424,70 @@ class _CreateAccountScreenState extends State<CreateAccount> {
   }
 
   Widget _buildReenterPasswordField() {
-    return TextFormField(
-      controller: _reenterPasswordController,
-      obscureText: _obscurePassword,
-      decoration: InputDecoration(
-        labelText: 'Re-enter Password',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4.0),
-          borderSide: const BorderSide(color: Color(0xFF9CA3AF), width: 4.0),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4.0),
-          borderSide: const BorderSide(color: Color(0xFF4146F5), width: 4.0),
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
+    bool _reenterPasswordObscure = true; // Independent obscure state for re-enter password
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return TextFormField(
+          controller: _reenterPasswordController,
+          obscureText: _reenterPasswordObscure,
+          maxLines: 1, // Ensure maxLines is 1
+          decoration: InputDecoration(
+            labelText: 'Re-enter Password',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4.0),
+              borderSide: const BorderSide(color: Color(0xFF9CA3AF), width: 4.0),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4.0),
+              borderSide: const BorderSide(color: Color(0xFF4146F5), width: 4.0),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _reenterPasswordObscure ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _reenterPasswordObscure = !_reenterPasswordObscure;
+                });
+              },
+            ),
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'This field is required';
+            }
+            if (value != _passwordController.text) {
+              return 'Passwords do not match';
+            }
+            return null;
           },
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'This field is required';
-        }
-        if (value != _passwordController.text) {
-          return 'Passwords do not match';
-        }
-        return null;
+        );
       },
+    );
+  }
+
+  void _showPasswordRequirements() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Password Requirements'),
+        content: const Text(
+          'Your password must meet the following requirements:\n\n'
+          '• At least 8 characters long\n'
+          '• Include at least 1 uppercase letter\n'
+          '• Include at least 1 lowercase letter\n'
+          '• Include at least 1 number\n'
+          '• Include at least 1 special character (e.g., @, #, \$, %)',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -388,23 +498,11 @@ class _CreateAccountScreenState extends State<CreateAccount> {
     if (!value.startsWith('+61')) {
       return 'Phone number must start with +61';
     }
-    if (value.length != 12 || !RegExp(r'^\+61\d{9}$').hasMatch(value)) { // +61 followed by 9 digits
+    if (value.length != 12 || !RegExp(r'^\+61\d{9}$').hasMatch(value)) {
       return 'Phone number must be 9 digits long';
     }
-    // Placeholder for backend validation
     if (_takenPhoneNumbers.contains(value)) {
       return 'Phone number already taken';
-    }
-    return null;
-  }
-
-  String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'This field is required';
-    }
-    // Placeholder for backend validation
-    if (_takenUsernames.contains(value)) {
-      return 'Username already taken';
     }
     return null;
   }
@@ -413,11 +511,9 @@ class _CreateAccountScreenState extends State<CreateAccount> {
     if (value == null || value.isEmpty) {
       return 'This field is required';
     }
-    // Placeholder for backend validation
     if (_takenEmails.contains(value)) {
       return 'Email already taken';
     }
     return null;
   }
 }
-

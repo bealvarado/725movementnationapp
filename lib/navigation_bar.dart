@@ -18,8 +18,7 @@ class _NavBar extends State<NavBar> {
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
     const GalleryScreen(),
-    const BookingScreen(),
-    const BookingScreen(),
+    const BookingScreen(), // Ensure this widget is correct
     const ProfileScreen(),
   ];
 
@@ -51,10 +50,6 @@ class _NavBar extends State<NavBar> {
             label: 'Book',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble),
-            label: 'Message',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
           ),
@@ -66,7 +61,4 @@ class _NavBar extends State<NavBar> {
       ),
     );
   }
-}
-
-class ClassBookingScreen {
 }

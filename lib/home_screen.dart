@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'classbooking_screen.dart';
+import 'classschedule_screen.dart';
 import 'gallery_screen.dart';
 import 'profile_screen.dart';
 
@@ -7,7 +8,6 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomeScreenState createState() => _HomeScreenState();
 }
 
@@ -17,7 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   static const List<Widget> _widgetOptions = <Widget>[
     HomeScreenContent(),
     GalleryScreen(),
-    BookingScreen(),
     BookingScreen(),
     ProfileScreen(),
   ];
@@ -39,12 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 2,
         title: Image.asset('assets/images/brandlogo.png', height: 40),
       ),
+      backgroundColor: const Color(0xFFF8F8F8),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(255, 255, 255, 255),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.2),
@@ -56,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -68,11 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month_outlined),
               label: 'Book',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: 'Messages',
-            ),
+           ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
               label: 'Profile',
@@ -99,7 +96,6 @@ class HomeScreenContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner Section
             GestureDetector(
               onTap: () {
                 Navigator.pushAndRemoveUntil(
@@ -146,11 +142,10 @@ class HomeScreenContent extends StatelessWidget {
                       left: 16,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const BookingScreen()),
-                            (Route<dynamic> route) => false,
-                          );
+                          final homeScreenState = context.findAncestorStateOfType<_HomeScreenState>();
+                          homeScreenState?.setState(() {
+                            homeScreenState._selectedIndex = 2;
+                          });
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE84479),
@@ -174,7 +169,6 @@ class HomeScreenContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            // Courses Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -190,7 +184,9 @@ class HomeScreenContent extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const BookingScreen(initialTabIndex: 1),
+                      ),
                     );
                   },
                   child: const Text(
@@ -204,30 +200,29 @@ class HomeScreenContent extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 0),
-            const SingleChildScrollView(
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   CourseCard(
                     image: 'assets/images/course1.png',
                     title: 'Beginner',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 1),
                   ),
                   CourseCard(
                     image: 'assets/images/course2.png',
                     title: 'Intermediate and Advanced',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 1),
                   ),
                   CourseCard(
                     image: 'assets/images/course3.png',
                     title: 'Pop Dance',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 1),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 6),
-            // Upcoming Events Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -243,7 +238,9 @@ class HomeScreenContent extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const BookingScreen(initialTabIndex: 2),
+                      ),
                     );
                   },
                   child: const Text(
@@ -257,7 +254,7 @@ class HomeScreenContent extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const SingleChildScrollView(
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
@@ -266,21 +263,21 @@ class HomeScreenContent extends StatelessWidget {
                     title: 'Spring Showcase',
                     date: 'Mon, Dec 3 • 11am - 5pm',
                     location: 'Parramatta Studio',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 2),
                   ),
                   EventCard(
                     image: 'assets/images/event2.png',
                     title: 'Summer Showcase',
                     date: 'Mon, Dec 3 • 11am - 5pm',
                     location: 'Parramatta Studio',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 2),
                   ),
                   EventCard(
                     image: 'assets/images/event3.png',
                     title: 'Kids Dance',
                     date: 'Mon, Dec 3 • 11am - 5pm',
                     location: 'Parramatta Studio',
-                    targetClass: BookingScreen(), // Placeholder for target class
+                    targetClass: const BookingScreen(initialTabIndex: 2),
                   ),
                 ],
               ),
@@ -295,7 +292,7 @@ class HomeScreenContent extends StatelessWidget {
 class CourseCard extends StatelessWidget {
   final String image;
   final String title;
-  final Widget targetClass; // Placeholder for target class
+  final Widget targetClass;
 
   const CourseCard({
     super.key,
@@ -377,7 +374,7 @@ class EventCard extends StatelessWidget {
   final String title;
   final String date;
   final String location;
-  final Widget targetClass; // Placeholder for target class
+  final Widget targetClass;
 
   const EventCard({
     super.key,
@@ -398,8 +395,8 @@ class EventCard extends StatelessWidget {
         );
       },
       child: Container(
-        width: 160, // Adjusted width for better layout
-        height: 180, // Adjusted height for better layout
+        width: 160,
+        height: 180,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
@@ -417,7 +414,7 @@ class EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 95, // Adjusted height for the image
+              height: 95,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(8),
@@ -435,7 +432,7 @@ class EventCard extends StatelessWidget {
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 15, // Adjusted font size
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'SF Pro Display',
                   overflow: TextOverflow.ellipsis,
@@ -448,7 +445,7 @@ class EventCard extends StatelessWidget {
               child: Text(
                 date,
                 style: const TextStyle(
-                  fontSize: 12, // Adjusted font size
+                  fontSize: 12,
                   color: Color(0xFF9CA3AF),
                   fontFamily: 'SF Pro Display',
                   overflow: TextOverflow.ellipsis,
@@ -460,13 +457,13 @@ class EventCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0).copyWith(top: 1, bottom: 0),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, size: 14, color: Color(0xFFE84479)), // Adjusted icon size
+                  const Icon(Icons.location_on, size: 14, color: Color(0xFFE84479)),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       location,
                       style: const TextStyle(
-                        fontSize: 12, // Adjusted font size
+                        fontSize: 12,
                         color: Color(0xFF9CA3AF),
                         fontFamily: 'SF Pro Display',
                         overflow: TextOverflow.ellipsis,
