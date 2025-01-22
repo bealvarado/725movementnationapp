@@ -1,52 +1,52 @@
+// Import required packages
 const express = require('express');
-const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
+const bodyParser = require('body-parser');      
 
-// Correct path to the Firebase service account key
-const serviceAccount = require('C:/Users/Amyelito/dance-booking-backend/dance-booking-backend/movement-nation-dance-st-52a74-firebase-adminsdk-8msti-1a0a989b80.json'); 
-
+// Initialize Express app
 const app = express();
-const port = 4000;
+app.use(bodyParser.json()); // Middleware to parse JSON request bodies
 
-// Initialize Firebase Admin SDK with service account key
+// Path to your Firebase service account key
+const serviceAccount = require('C:/Users/Amyelito/dance-booking-backend/movement-nation-dance-st-52a74-firebase-adminsdk-8msti-ae0e233fbd.json');
+
+// Initialize Firebase Admin SDK with service account credentials
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://movement-nation-dance-st-52a74.firebaseio.com"  // Correct Firebase Realtime Database URL
 });
 
+// Firestore reference
 const db = admin.firestore();
 
-// Middleware to parse JSON
-app.use(bodyParser.json());
+// Define a simple route to test the server
+app.get('/', (req, res) => {
+  res.send('Hello from the backend!');
+});
 
-// POST route to create a booking
-app.post('/create-booking', async (req, res) => {
+// Define a POST route to add a booking to Firestore
+app.post('/add-booking', async (req, res) => {
+  const { name, location, time } = req.body;
+
+  if (!name || !location || !time) {
+    return res.status(400).json({ error: 'Missing booking details' });
+  }
+
   try {
-    const { location, date, time } = req.body;
-
-    if (!location || !date || !time) {
-      return res.status(400).send('Missing required fields');
-    }
-
-    // Add the booking to Firestore
-    const bookingRef = await db.collection('bookings').add({
-      location: location,
-      date: date,
-      time: time,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    const bookingRef = db.collection('bookings').doc();
+    await bookingRef.set({
+      name,
+      location,
+      time,
     });
-
-    res.status(200).json({
-      message: 'Booking created successfully!',
-      bookingId: bookingRef.id
-    });
+    return res.status(200).json({ success: 'Booking added successfully!' });
   } catch (error) {
-    console.error("Error creating booking:", error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error adding booking: ', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// Start the server on a specific port
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
